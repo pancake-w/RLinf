@@ -1,9 +1,10 @@
 defaults:
   - env/libero_spatial@env.train
   - env/libero_spatial@env.eval
-  - model/gr00t_16@actor.model           
+  - model/gr00t_16@actor.model
   - training_backend/fsdp@actor.fsdp_config
   - weight_syncer/patch_syncer@weight_syncer
+  - _self_
   - override hydra/job_logging: stdout
 
 hydra:
@@ -107,7 +108,7 @@ rollout:
   enable_offload: True
   pipeline_stage_num: 1
   model:
-    model_path: "/workspace/dataset/GR00T-1.6-SFT-LIBERO-HF"
+    model_path: ${oc.env:GR00T_MODEL_PATH,/workspace/dataset/GR00T-N1.7-LIBERO}
     precision: ${actor.model.precision}
 
 actor:
@@ -120,8 +121,8 @@ actor:
 
   # Override the default values in model/gr00t_16
   model:
-    model_path: "/workspace/dataset/GR00T-1.6-SFT-LIBERO-HF"
-    model_type: "gr00t_1_6"   
+    model_path: ${oc.env:GR00T_MODEL_PATH,/workspace/dataset/GR00T-N1.7-LIBERO}
+    model_type: "gr00t_1_6"
     add_value_head: True
     num_action_chunks: 1       
     denoising_steps: 1

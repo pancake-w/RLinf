@@ -1,6 +1,7 @@
 defaults:
   - model/gr00t_16@actor.model
   - training_backend/fsdp@actor.fsdp_config
+  - _self_
   - override hydra/job_logging: stdout
 
 hydra:
@@ -26,10 +27,10 @@ runner:
   max_epochs: 100000
   max_steps: 20000
   val_check_interval: -1
-  save_interval: 500
+  save_interval: 2000
 
 data:
-  train_data_paths: '/path/to/Gr00t_16-libero-Spatial-dataset'
+  train_data_paths: ${oc.env:GR00T_SFT_DATASET_PATH,/path/to/Gr00t_16-libero-Spatial-dataset}
   action_key: 'action'
 
 algorithm:
@@ -38,13 +39,13 @@ algorithm:
 actor:
   group_name: 'ActorGroup'
   training_backend: 'fsdp'
-  micro_batch_size: 1
+  micro_batch_size: 2
   global_batch_size: 64
   seed: 42
 
   model:
     precision: 'bf16'
-    model_path: '/path/to/GR00T-N1.6-3B'
+    model_path: ${oc.env:GR00T_SFT_MODEL_PATH,nvidia/GR00T-N1.7-3B}
     model_type: 'gr00t_1_6_sft'
     num_action_chunks: 16
     embodiment_tag: 'libero_panda'

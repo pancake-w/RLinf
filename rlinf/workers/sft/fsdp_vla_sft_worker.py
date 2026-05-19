@@ -56,7 +56,7 @@ class FSDPVlaSftWorker(FSDPSftWorker):
                 self.cfg, self._world_size, self._rank, data_paths
             )
         elif SupportedModel(self.cfg.actor.model.model_type) in [
-            SupportedModel.GR00T_1_6_SFT
+            SupportedModel.GR00T_1_6_SFT,
         ]:
             from rlinf.models.embodiment.gr00t_1_6.gr00t_16_sft_model import (
                 build_gr00t_dataloader,

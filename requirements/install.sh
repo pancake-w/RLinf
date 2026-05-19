@@ -597,6 +597,8 @@ install_gr00t_16_model() {
     create_and_sync_venv
     install_common_embodied_deps
 
+    echo "gr00t_16 is the RLinf compatibility entrypoint for Isaac-GR00T N1.7."
+
     echo "Checking for git-lfs (required for NVIDIA Isaac-GR00T)..."
     if ! command -v git-lfs &> /dev/null; then
         echo "⚠️ git-lfs not found! Attempting to install it automatically..."
@@ -613,37 +615,34 @@ install_gr00t_16_model() {
     echo "========================================================="
 
     local gr00t_path
-    gr00t_path=$(clone_or_reuse_repo GR00T_PATH "$VENV_DIR/gr00t" https://github.com/NVIDIA/Isaac-GR00T.git)
-    
-    echo "Checking out gr00t version 7d5a455 and applying dependency patches..."
+    local gr00t_git_url="${GR00T_GIT_URL:-https://github.com/NVIDIA/Isaac-GR00T.git}"
+    local gr00t_git_ref="${GR00T_GIT_REF:-n1.7-release}"
+    gr00t_path=$(clone_or_reuse_repo GR00T_PATH "$VENV_DIR/gr00t" "$gr00t_git_url" -b "$gr00t_git_ref" --depth 1)
+
+    echo "Preparing GR00T repo for ref ${gr00t_git_ref}..."
     (
         cd "$gr00t_path"
-
-        git reset --hard HEAD
-        git clean -fdx
-
-        git checkout 7d5a455add459e870c2e4e4569006acace432d49
-
-        current_hash=$(git rev-parse HEAD)
-        echo "========================================================="
-        echo "✅ GR00T repo is currently at Hash: $current_hash"
-        echo "========================================================="
-        
-        if [ -f "pyproject.toml" ]; then
-            sed -i 's/peft==0.11.1/peft>=0.17.1/g' pyproject.toml
-            sed -i 's/peft<0.12/peft>=0.17.1/g' pyproject.toml
+        local reused_gr00t_path=""
+        reused_gr00t_path="$(printenv GR00T_PATH 2>/dev/null || true)"
+        if [ -d ".git" ]; then
+            git fetch --all --tags >/dev/null 2>&1 || true
+            if [ -z "$reused_gr00t_path" ]; then
+                git checkout "$gr00t_git_ref"
+            else
+                echo "GR00T_PATH is set; reusing existing checkout at $gr00t_path without changing its branch."
+            fi
         fi
-        if [ -f "setup.py" ]; then
-            sed -i 's/peft==0.11.1/peft>=0.17.1/g' setup.py
-            sed -i 's/peft<0.12/peft>=0.17.1/g' setup.py
-        fi
+
+        current_ref=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+        current_hash=$(git rev-parse HEAD 2>/dev/null || true)
+        echo "========================================================="
+        echo "✅ GR00T repo ref: ${current_ref:-detached}"
+        echo "✅ GR00T repo hash: ${current_hash:-unknown}"
+        echo "========================================================="
     )
 
     uv pip install -e "$gr00t_path" --no-deps
-
-    uv pip install diffusers==0.35.1 av==15.1.0 pydantic==2.12.5 albumentations==1.4.18 \
-                pyzmq==27.0.1 pyopengl==3.1.10 mujoco==3.6.0 ray==2.54.0 lerobot==0.4.4 \
-                "transformers==4.51.3" "lmdb==1.7.5"
+    uv pip install -r $SCRIPT_DIR/embodied/models/gr00t_16.txt
 
     case "$ENV_NAME" in
         maniskill_libero)
@@ -651,18 +650,10 @@ install_gr00t_16_model() {
             install_flash_attn
             ;;
         *)
-            echo "Environment '$ENV_NAME' is not yet validated for Gr00t 1.6." >&2
+            echo "Environment '$ENV_NAME' is not yet validated for Gr00t N1.7." >&2
             exit 1
             ;;
     esac
-    
-    installed_peft=$(uv pip show peft | grep Version | awk '{print $2}')
-    if [ "$installed_peft" != "0.17.1" ]; then
-        echo "Warning: PEFT version mismatch ($installed_peft). Force fixing to 0.17.1..."
-        source "$VENV_DIR/bin/activate"
-        python -m pip uninstall -y peft || true
-        python -m pip install peft==0.17.1 --no-dependencies
-    fi
 
     uv pip uninstall pynvml || true
 }

@@ -1039,6 +1039,11 @@ jobs:
           export UV_PYTHON_INSTALL_DIR=/workspace/dataset/.uv_python
           export LIBERO_PATH=/workspace/dataset/LIBERO
           export GR00T_PATH=/workspace/dataset/Isaac-GR00T/
+          export GR00T_GIT_REF=n1.7-release
+          python - <<'PY'
+          import shutil
+          assert shutil.which("ffmpeg") is not None, "ffmpeg is required by GR00T N1.7"
+          PY
           bash requirements/install.sh embodied --model gr00t_16 --env maniskill_libero
 
       - name: Libero-Spatial PPO test
@@ -1052,4 +1057,4 @@ jobs:
       - name: Clean up
         run: |
           rm -rf .venv
-          uv cache prune  
+          uv cache prune

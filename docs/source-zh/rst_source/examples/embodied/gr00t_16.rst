@@ -1,4 +1,4 @@
-GR00T-N1.6 模型强化学习训练
+GR00T-N1.7 模型强化学习训练
 ==================================================================
 
 .. |huggingface| image:: /_static/svg/hf-logo.svg
@@ -6,7 +6,9 @@ GR00T-N1.6 模型强化学习训练
    :height: 16px
    :class: inline-icon
 
-本示例提供了一份完整指南，介绍如何在 LIBERO 环境中使用 RLinf 框架，通过强化学习对 GR00T-N1.6 算法进行微调。内容涵盖从环境设置、核心算法设计到训练配置、评估和可视化的全过程，并提供可复现的命令和配置片段。
+本示例提供了一份完整指南，介绍如何在 LIBERO 环境中使用 RLinf 框架，通过强化学习对 GR00T-N1.7 算法进行微调。内容涵盖从环境设置、核心算法设计到训练配置、评估和可视化的全过程，并提供可复现的命令和配置片段。
+
+为了保持与现有 RLinf 示例和配置入口兼容，配置名仍保留 ``gr00t_16`` / ``gr00t_1_6``；但当前具身强化学习接入所依赖的底层 Isaac-GR00T 版本已经 pin 到 N1.7 release。
 
 主要目标是开发一个能够执行机器人操作的模型，具体包括：
 
@@ -22,11 +24,11 @@ GR00T-N1.6 模型强化学习训练
 - **环境**：基于 robosuite (MuJoCo) 构建的 LIBERO 仿真基准。
 - **任务**：控制 7 自由度机械臂执行各种家庭操作技能（拾取放置、堆叠、打开抽屉、空间重排）。
 - **观测**：由放置在工作区周围的离屏摄像头捕获的 RGB 图像（典型分辨率为 128×128、224×224 或 256×256）。
-- **动作空间**：环境原生提供 7 维连续动作——3D 末端执行器位置控制（x、y、z）、3D 旋转控制（横滚、俯仰、偏航）、夹爪控制（打开/关闭）。*注：GR00T-N1.6 在底层会通过具身标签将该 7 维动作统一零填充（Zero-padding）至 128 维的跨具身通用动作空间中。*
+- **动作空间**：环境原生提供 7 维连续动作——3D 末端执行器位置控制（x、y、z）、3D 旋转控制（横滚、俯仰、偏航）、夹爪控制（打开/关闭）。*注：GR00T-N1.7 在底层会通过具身标签将该 7 维动作统一零填充（Zero-padding）至 128 维的跨具身通用动作空间中。*
 
 **任务描述格式**
 
-GR00T-N1.6 直接将环境提供的自然语言任务描述作为语言模型的输入，利用冻结的主干网络提取语义特征。
+GR00T-N1.7 直接将环境提供的自然语言任务描述作为语言模型的输入，利用冻结的主干网络提取语义特征。
 
 **数据结构**
 
@@ -51,17 +53,17 @@ GR00T-N1.6 直接将环境提供的自然语言任务描述作为语言模型的
 ------------------------------------------------------------------
 **灵活的具身生态与 Modality Config**
 
-GR00T-N1.6 采用了高度解耦的数据接口设计。通过配置不同的 ``Embodiment Tag`` 与模态转换器，框架不仅原生支持如 LIBERO 中的 7 自由度机械臂（3D位置、3D旋转、夹爪），更能通过同一套底层连续控制参数无缝扩展至具有四条腿的四足机器人形态，无需对底层网络架构做任何侵入性修改。
+GR00T-N1.7 采用了高度解耦的数据接口设计。通过配置不同的 ``Embodiment Tag`` 与模态转换器，框架不仅原生支持如 LIBERO 中的 7 自由度机械臂（3D位置、3D旋转、夹爪），更能通过同一套底层连续控制参数无缝扩展至具有四条腿的四足机器人形态，无需对底层网络架构做任何侵入性修改。
 
-GR00T-N1.6 核心架构升级
+GR00T-N1.7 核心架构升级
 ------------------------------------------------------------------
 **1. FSDP (Fully Sharded Data Parallel) Actor Worker**
 
-鉴于 GR00T-N1.6 参数规模的显著增长，RLinf 的 Actor 节点现已全面重构为 ``EmbodiedFSDPActor``。该架构将模型权重、梯度与优化器状态跨多 GPU 节点分片，打破了传统 DDP 的单卡显存瓶颈，极大提升了吞吐量。
+鉴于 GR00T-N1.7 参数规模的显著增长，RLinf 的 Actor 节点现已全面重构为 ``EmbodiedFSDPActor``。该架构将模型权重、梯度与优化器状态跨多 GPU 节点分片，打破了传统 DDP 的单卡显存瓶颈，极大提升了吞吐量。
 
 **2. Head-only 微调与防爆机制 (Gradient Protection)**
 
-为适应少量数据的物理环境对齐并节省计算资源，GR00T-N1.6 的 RL 训练采用部分微调策略：
+为适应少量数据的物理环境对齐并节省计算资源，GR00T-N1.7 的 RL 训练采用部分微调策略：
 
 - **主干冻结 (Backbone Freezing)**：严格锁定数以十亿计的视觉和语言主干网络参数，使其仅以推理模式（Eval）运行。
 - **动作头精细控制**：仅解冻动作输出头（Action Head）以学习物理动力学。更进一步，框架对时间步编码器（``timestep_encoder``）进行了强制冻结与梯度 Hook 拦截，精准防范了高维动作分布中极易引发的 ``NaN`` 梯度爆炸问题。
@@ -113,15 +115,15 @@ GR00T-N1.6 核心架构升级
 
 模型下载
 ------------------------------------------------------------------
-开始训练前，您需要运行之前 RLinf 提供的 GR00T-N1.6 的 SFT，并获得经过格式转换后的模型，并将模型路径配置到指定的 yaml 文件中。RLinf SFT的模型将会后续放出，敬请期待！目前支持四种libero任务：Saptial, Object, Goal, 10。
+开始训练前，您需要运行之前 RLinf 提供的 GR00T-N1.7 的 SFT，并获得经过格式转换后的模型，并将模型路径配置到指定的 yaml 文件中。RLinf SFT的模型将会后续放出，敬请期待！目前支持四种libero任务：Saptial, Object, Goal, 10。
 
-GR00T-N1.6 核心架构设计理念
+GR00T-N1.7 核心架构设计理念
 ------------------------------------------------------------------
-此处介绍 GR00T-N1.6 的核心架构升级与重要设计理念，以帮助开发者更深入地理解底层逻辑。
+此处介绍 GR00T-N1.7 的核心架构升级与重要设计理念，以帮助开发者更深入地理解底层逻辑。
 
 **1. 两阶段解耦训练范式 (Two-Stage Training Pipeline)**
 
-RLinf 框架针对 GR00T-N1.6 采用了高度解耦的两阶段训练架构：
+RLinf 框架针对 GR00T-N1.7 采用了高度解耦的两阶段训练架构：
 
 - **第一阶段（纯 SFT 预热）**：采用 ``Pure SFT Model`` 模式。模型完全脱离物理仿真环境，仅依赖离线专家数据集进行监督微调，专注拟合目标动作轨迹。
 - **第二阶段（PPO 强化对齐）**：在 SFT 收敛的基础上，将模型载入基于 FSDP 的分布式 Actor 中，与仿真环境进行实时交互。
@@ -166,7 +168,7 @@ RLinf 框架针对 GR00T-N1.6 采用了高度解耦的两阶段训练架构：
 .. code-block:: yaml
 
    model:
-     model_type: "gr00t_1_6"   
+     model_type: "gr00t_1_6"
      add_value_head: True          # 强化学习关键：动态注入价值网络预测优势
      num_action_chunks: 1          # PPO阶段调为1，提升高频物理交互的实时性
      denoising_steps: 1            # 控制流匹配(Flow-Matching)去噪步数
@@ -199,7 +201,7 @@ RLinf 框架针对 GR00T-N1.6 采用了高度解耦的两阶段训练架构：
 
 **3. 配置文件路径**
 
-- GR00T-N1.6 + PPO + Libero-Spatial：
+- GR00T-N1.7 + PPO + Libero-Spatial：
   ``examples/embodiment/config/libero_spatial_ppo_gr00t_16.yaml``
 
 需要修改 SFT 后模型的路径：
@@ -207,7 +209,7 @@ RLinf 框架针对 GR00T-N1.6 采用了高度解耦的两阶段训练架构：
 .. code-block:: yaml
 
    model:
-     model_path: "/path/to/GR00T-N1.6-libero-spatial-ppo"
+     model_path: "/path/to/GR00T-N1.7-libero-spatial-ppo"
 
 **4. 启动命令**
 
@@ -244,7 +246,7 @@ RLinf 框架针对 GR00T-N1.6 采用了高度解耦的两阶段训练架构：
 
 微调完成后，系统将在输出目录生成 ``metadata.json`` 等统计文件，保留推理和后续部署所需的关键模态信息。
 
-在LIBERO环境中，GR00T-N1.6 通过上述配置和训练流程，能够实现从视觉输入到连续动作输出的端到端强化学习微调，显著提升机器人在复杂操作任务中的表现与泛化能力。
+在LIBERO环境中，GR00T-N1.7 通过上述配置和训练流程，能够实现从视觉输入到连续动作输出的端到端强化学习微调，显著提升机器人在复杂操作任务中的表现与泛化能力。
 
 成功率展示如下（PPO）：
 
@@ -253,7 +255,7 @@ RLinf 框架针对 GR00T-N1.6 采用了高度解耦的两阶段训练架构：
    <div style="display: flex; justify-content: center; margin: 20px 0;">
      <div style="flex: 0.5; text-align: center;">
        <img src="https://github.com/RLinf/misc/blob/main/pic/gr00t_1.6_ppo_success_rate.png?raw=true" style="width: 100%;"/>
-       <p><em>GR00T-N1.6 SFT + PPO在 LIBERO_Spatial 的成功率曲线</em></p>
+       <p><em>GR00T-N1.7 SFT + PPO在 LIBERO_Spatial 的成功率曲线</em></p>
      </div>
    </div>
 
@@ -263,8 +265,8 @@ RLinf 框架针对 GR00T-N1.6 采用了高度解耦的两阶段训练架构：
    * - 模型
      - Spatial 
 
-   * - GR00T-N1.6 SFT
-     - |huggingface| `70% <https://huggingface.co/RLinf/RLinf-Gr00t-N1.6-RL-Spatial>`_
+   * - GR00T-N1.7 SFT
+     - |huggingface| `70% <https://huggingface.co/RLinf/RLinf-Gr00t-N1.7-RL-Spatial>`_
 
    * - +PPO
-     - |huggingface| `82% <https://huggingface.co/RLinf/RLinf-Gr00t-N1.6-RL-Spatial-Step500>`_
+     - |huggingface| `82% <https://huggingface.co/RLinf/RLinf-Gr00t-N1.7-RL-Spatial-Step500>`_

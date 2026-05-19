@@ -106,8 +106,8 @@ def _register_builtin_models():
 
         return get_model(cfg, torch_dtype)
 
-    def _build_gr00t_1_6(cfg: DictConfig, torch_dtype):
-        from rlinf.models.embodiment.gr00t_1_6 import get_model
+    def _build_gr00t_1_7(cfg: DictConfig, torch_dtype):
+        from rlinf.models.embodiment.gr00t_1_7 import get_model
 
         return get_model(cfg, torch_dtype)
 
@@ -207,17 +207,16 @@ def _register_builtin_models():
     )
     register_model(
         SupportedModel.GR00T_1_6.value,
-        _build_gr00t_1_6,
+        _build_gr00t_1_7,
         category="embodied",
         force=True,
     )
     register_model(
         SupportedModel.GR00T_1_6_SFT.value,
-        _build_gr00t_1_6,
+        _build_gr00t_1_7,
         category="embodied",
         force=True,
     )
-
 
 _register_builtin_models()
 

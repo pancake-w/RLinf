@@ -31,4 +31,3 @@ rl_head_config:
   padding_value: 570
 
 num_steps: 4
-

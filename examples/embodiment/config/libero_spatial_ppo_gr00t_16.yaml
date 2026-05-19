@@ -1,9 +1,10 @@
 defaults:
   - env/libero_spatial@env.train
   - env/libero_spatial@env.eval
-  - model/gr00t_16@actor.model           
+  - model/gr00t_16@actor.model
   - training_backend/fsdp@actor.fsdp_config
   - weight_syncer/patch_syncer@weight_syncer
+  - _self_
   - override hydra/job_logging: stdout
 
 hydra:
@@ -24,7 +25,7 @@ runner:
   logger:
     log_path: "../results"
     project_name: rlinf
-    experiment_name: "libero_spatial_ppo_gr00t_n16"   
+    experiment_name: "libero_spatial_ppo_gr00t_n16"
     logger_backends: ["tensorboard"]
 
   max_epochs: 2000
@@ -95,7 +96,7 @@ env:
     use_rel_reward: false
     total_num_envs: 8
     group_size: 1
-    auto_reset: True
+    auto_reset: False
     ignore_terminations: True
     max_episode_steps: 240
     max_steps_per_rollout_epoch: 240
@@ -111,7 +112,7 @@ rollout:
   pipeline_stage_num: 1
 
   model:
-    model_path: "/path/to/GR00T-N1.6-3B-spatial"
+    model_path: ${oc.env:GR00T_MODEL_PATH,nvidia/GR00T-N1.7-LIBERO}
     precision: ${actor.model.precision}
 actor:
   group_name: "ActorGroup"
@@ -123,8 +124,8 @@ actor:
   enable_offload: True
 
   model:
-    model_path: "/path/to/GR00T-N1.6-3B-spatial"
-    model_type: "gr00t_1_6"   
+    model_path: ${oc.env:GR00T_MODEL_PATH,nvidia/GR00T-N1.7-LIBERO}
+    model_type: "gr00t_1_6"
     embodiment_tag: "libero_panda"
     add_value_head: True
     num_action_chunks: 16

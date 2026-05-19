@@ -1,4 +1,4 @@
-GR00T-N1.6 Supervised Fine-tuning Training (SFT)
+GR00T-N1.7 Supervised Fine-tuning Training (SFT)
 ==================================================================
 
 .. |huggingface| image:: /_static/svg/hf-logo.svg
@@ -6,7 +6,7 @@ GR00T-N1.6 Supervised Fine-tuning Training (SFT)
    :height: 16px
    :class: inline-icon
 
-This document explains how to perform **supervised fine-tuning (SFT)** for the GR00T-N1.6 model within the RLinf framework. SFT is usually the first stage before reinforcement learning, where the model is fine-tuned on an offline dataset to better adapt to the target task distribution. For GR00T-N1.6, we provide sample configurations for different datasets to help users get started quickly.
+This document explains how to perform **supervised fine-tuning (SFT)** for the GR00T-N1.7 model within the RLinf framework. SFT is usually the first stage before reinforcement learning, where the model is fine-tuned on an offline dataset to better adapt to the target task distribution. For GR00T-N1.7, we provide sample configurations for different datasets to help users get started quickly.
 
 *Note: A dedicated guide for LoRA fine-tuning will be added later.*
 
@@ -32,7 +32,7 @@ Training configuration
 A full example configuration is available at:
 ``examples/sft/config/libero_sft_gr00t_16.yaml``
 
-A general GR00T-N1.6 SFT configuration example is shown below:
+A general GR00T-N1.7 SFT configuration example is shown below:
 
 1. Cluster configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,7 +49,7 @@ A general GR00T-N1.6 SFT configuration example is shown below:
 .. code-block:: yaml
 
    model:
-     model_path: "/path/to/GR00T-N1.6-3B" # change to the actual GR00T-N1.6 model path
+     model_path: "/path/to/GR00T-N1.7-3B" # change to the actual GR00T-N1.7 model path
      model_type: "gr00t_1_6_sft"
      precision: "bf16"
      action_dim: 128
@@ -67,7 +67,7 @@ A general GR00T-N1.6 SFT configuration example is shown below:
 Dependency installation
 ------------------------------------------------------------------
 
-This section describes the dependency environment required for GR00T-N1.6 SFT training.
+This section describes the dependency environment required for GR00T-N1.7 SFT training.
 
 1. Clone the RLinf repository
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -113,7 +113,7 @@ After entering the container, switch to the appropriate virtual environment usin
 
 Model download
 ------------------------------------------------------------------
-Before starting SFT training, download the required dataset and the GR00T-N1.6 pretrained model and place them in the appropriate locations.
+Before starting SFT training, download the required dataset and the GR00T-N1.7 pretrained model and place them in the appropriate locations.
 Currently, four Libero tasks are supported: Spatial, Object, Goal, and 10.
 
 Libero dataset download:
@@ -146,19 +146,19 @@ Since the provided data version is an older Lerobot version, it needs to be conv
    python -m lerobot.datasets.v30.convert_dataset_v21_to_v30 --repo-id=Gr00t_16-libero-<task>-dataset --root=/path/to/RLinf --push-to-hub=false --force-conversion
    # e.g.：python -m lerobot.datasets.v30.convert_dataset_v21_to_v30 --repo-id=Gr00t_16-libero-Spatial-dataset  --root=/workspace/test/RLinf  --push-to-hub=false --force-conversion
 
-GR00T-N1.6 model download
+GR00T-N1.7 model download
 
 .. code-block:: bash
 
    # Method 1: use git clone
    git lfs install
-   git clone https://huggingface.co/nvidia/GR00T-N1.6-3B
+   git clone https://huggingface.co/nvidia/GR00T-N1.7-3B
 
    # Method 2: use huggingface-hub
    # To speed up downloads in China, set:
    # export HF_ENDPOINT=https://hf-mirror.com
    pip install huggingface-hub
-   hf download nvidia/GR00T-N1.6-3B --repo-type model --local-dir GR00T-N1.6-3B
+   hf download nvidia/GR00T-N1.7-3B --repo-type model --local-dir GR00T-N1.7-3B
 
 Launch script
 ------------------------------------------------------------------
@@ -173,7 +173,7 @@ Run the training script:
 LeRobot SFT model format conversion
 ------------------------------------------------------------------
 
-To use the supervised fine-tuned model for reinforcement learning in RLinf, the SFT model needs to be converted to the standard GR00T-N1.6 format.
+To use the supervised fine-tuned model for reinforcement learning in RLinf, the SFT model needs to be converted to the standard GR00T-N1.7 format.
 
 Execute conversion
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -185,10 +185,10 @@ Execute conversion
    python -m rlinf.utils.ckpt_convertor.fsdp_convertor.convert_pt_to_hf \
       --config-path /path/to/RLinf/rlinf/utils/ckpt_convertor/fsdp_convertor/config \
       --config-name fsdp_model_convertor \
-      convertor.ckpt_path="/path/to/RLinf/logs/yymmdd-hours:minutes:seconds/gr00t_16_sft_libero/checkpoints/global_step_<>/actor/model_state_dict/full_weights.pt" \
+      convertor.ckpt_path="/path/to/RLinf/logs/yymmdd-hours:minutes:seconds/gr00t_16_sft_libero_n17/checkpoints/global_step_<>/actor/model_state_dict/full_weights.pt" \
       convertor.save_path="/path/to/where/you/put/GR00T-1.6-SFT-LIBERO-Spaial-HF" \
       ++model.model_type="gr00t_1_6_sft" \
-      ++model.model_path="/path/to/official/GR00T-N1.6-3B" \
+      ++model.model_path="/path/to/official/GR00T-N1.7-3B" \
       ++model.embodiment_tag="libero_panda" \
       ++model.denoising_steps=4 \
       ++model.num_action_chunks=1 \
@@ -205,6 +205,6 @@ Fine-tuning results display (SFT)
    <div style="display: flex; justify-content: center; margin: 20px 0;">
      <div style="flex: 0.5; text-align: center;">
        <img src="https://github.com/RLinf/misc/blob/main/pic/gr00t_1.6_sft_loss.png?raw=true" style="width: 100%;"/>
-       <p><em>GR00T-N1.6 SFT loss curve on LIBERO_Spatial</em></p>
+       <p><em>GR00T-N1.7 SFT loss curve on LIBERO_Spatial</em></p>
      </div>
    </div>
